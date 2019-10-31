@@ -1,5 +1,7 @@
 from room import Room
 from player import Player
+from item import Item
+from style import color
 
 titlecard = """
  ██▓███ ▓██   ██▓   ▓█████▄  █    ██  ███▄    █   ▄████ ▓█████  ▒█████   ███▄    █ 
@@ -36,6 +38,28 @@ room = {
     ),
 }
 
+item = {
+    "sword": Item(
+        "Sword",
+        "A sharp steel sword of journeyman quality.",
+        5,
+        {
+            "swing": "You swing the sword through the air, hitting nothing in particular.",
+            "sheath": "You sheath the sword into your leather scabbard.",
+            "unsheath": "You quickly unsheath your sword!",
+        },
+    ),
+    "lantern": Item(
+        "Lantern",
+        "A small oil lamp for illuminating the darkness.",
+        1,
+        {
+            "light": "You light the lantern, illuminating the area around you.",
+            "extinguish": "You extinguish the lantern, plunging the area around you into darkness.",
+        },
+    ),
+}
+
 
 # Link rooms together
 
@@ -48,26 +72,39 @@ room["narrow"].w_to = room["foyer"]
 room["narrow"].n_to = room["treasure"]
 room["treasure"].s_to = room["narrow"]
 
+# Add items to rooms
+room["foyer"].add_item(item["lantern"])
+room["overlook"].add_item(item["sword"])
+
 #
 # Main
 #
 
-# Make a new player object that is currently in the 'outside' room.
+avatar = """
+      _,.
+    ,` -.)
+   ( _/-\\-._
+  /,|`--._,-^|            ,
+  \_| |`-._/||          ,'|
+    |  `-, / |         /  /
+    |     || |        /  /
+     `r-._||/   __   /  /
+ __,-<_     )`-/  `./  /
+'  \   `---'   \   /  /
+    |           |./  /
+    /           //  /
+\_/' \         |/  /
+ |    |   _,^-'/  /
+ |    , ``  (\/  /_
+  \,.->._    \X-=/^
+  (  /   `-._//^`
+   `Y-.____(__}
+    |     {__)
+          ()
+"""
+
 player = Player("Brace", room["outside"])
 
-
-# Write a loop that:
-#
-# * Prints the current room name
-# * Prints the current description (the textwrap module might be useful here).
-# * Waits for user input and decides what to do.
-#
-# If the user enters a cardinal direction, attempt to move to the room there.
-# Print an error message if the movement isn't allowed.
-#
-# If the user enters "q", quit the game.
-
-running = True
 directions = ["north", "east", "south", "west"]
 direction_attr = {"north": "n_to", "east": "e_to", "south": "s_to", "west": "s_to"}
 incomplete_actions = {
@@ -100,12 +137,13 @@ def Move_Player(player, direction):
 
 print(f"\u001b[38;5;190m{titlecard}\033[0m")
 print(f"\n{player.current_room}")
-while running:
+
+while True:
     inp = input("> ").casefold().strip()
+    cur_items = player.current_room.items
 
     if "quit" in inp or inp == "q":
         print("Safe travels, adventurer")
-        running = False
         break
 
     split_inp = inp.split(" ", 1)
@@ -115,6 +153,18 @@ while running:
         valid_dir = Check_Direction(action)
         if valid_dir:
             Move_Player(player, valid_dir)
+        elif action == "who" or action == "character":
+            print(avatar)
+            print(
+                f"You are {color.BLUE}{color.BOLD}{player.name}{color.END}, fearless adventurer of the Py Dungeon!"
+            )
+        elif action == "where":
+            print(f"{player.current_room}")
+        elif action == "look":
+            print(f"{player.current_room}")
+            list_items = "\n".join([str(item) for item in player.current_room.items])
+            print("In this room you see:")
+            print(list_items)
         else:
             print(incomplete_actions.get(action, f"{action} what now?"))
     elif len(split_inp) > 1:
